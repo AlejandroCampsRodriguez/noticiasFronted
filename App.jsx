@@ -41,7 +41,7 @@ function App() {
           <p className="mt-2 text-muted">Buscando en Web y YouTube...</p>
         </div>
       )}
-
+{/* cargando pagina */}
       {!loading && <SearchResults results={results} />}
 
       <Footer />
