@@ -7,6 +7,7 @@ import NewsList from "./src/components/NewsList/NewsList";
 import { Spinner } from 'react-bootstrap';
 
 function App() {
+  {/*estados */}
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
