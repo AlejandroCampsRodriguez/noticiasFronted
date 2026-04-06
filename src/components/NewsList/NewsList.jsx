@@ -1,144 +1,103 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Carousel from 'react-bootstrap/Carousel';
 import { Card, Button, Spinner } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { noticias } from './BancoLink';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+const noticiasRespaldo = [
+  {
+    id: 1,
+    titulo: "Noticias para desarrolladores",
+    descripcion: "Actualidad sobre desarrollo web y software",
+    enlace: "https://dev.to",
+    thumbnail: null
+  },
+  {
+    id: 2,
+    titulo: "Frontend y JavaScript",
+    descripcion: "Tendencias y novedades del frontend moderno",
+    enlace: "https://midu.dev",
+    thumbnail: null
+  },
+  {
+    id: 3,
+    titulo: "Mobile y tecnología",
+    descripcion: "Noticias sobre desarrollo móvil",
+    enlace: "https://www.reactnative.dev/blog",
+    thumbnail: null
+  },
+  {
+    id: 4,
+    titulo: "Recursos de programación",
+    descripcion: "Noticias y recursos de programación web",
+    enlace: "https://www.noticias.dev/",
+    thumbnail: null
+  }
+];
 
 function NewsList() {
-  const [noticiasConMeta, setNoticiasConMeta] = useState([]);
+  const [noticias, setNoticias] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [index, setIndex] = useState(0);
 
-  // Función para extraer metadatos de una URL
-  const extraerMetadatos = async (url) => {
-    try {
-      // Usamos un proxy CORS para evitar problemas
-      const proxyUrl = 'https://api.allorigins.win/get?url=';
-      const encodedUrl = encodeURIComponent(url);
+  const procesarNoticias = (data) => {
+    console.log('Datos recibidos:', data);
+    return data.map((item) => {
+      let imagen = item.thumbnail;
+      const enlace = item.enlace;
       
-      const response = await fetch(`${proxyUrl}${encodedUrl}`, {
-        timeout: 10000
-      });
-      
-      const data = await response.json();
-      const html = data.contents;
-      
-      // Crear un DOM temporal para parsear el HTML
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // Extraer metadatos Open Graph
-      const getMeta = (name) => {
-        const meta = doc.querySelector(`meta[property="og:${name}"]`) || 
-                    doc.querySelector(`meta[name="${name}"]`) ||
-                    doc.querySelector(`meta[name="twitter:${name}"]`);
-        return meta ? meta.getAttribute('content') : null;
-      };
-
-      const titulo = getMeta('title') || doc.querySelector('title')?.textContent || 'Sin título';
-      const descripcion = getMeta('description') || 
-                         doc.querySelector('meta[name="description"]')?.getAttribute('content') ||
-                         'Sin descripción';
-      
-      // Buscar imagen - priorizar Open Graph, luego Twitter, luego primera imagen grande
-      let imagen = getMeta('image');
+      console.log('Enlace procesando:', enlace);
       
       if (!imagen) {
-        // Buscar la primera imagen grande en el contenido
-        const imagenes = doc.querySelectorAll('img');
-        for (let img of imagenes) {
-          const src = img.getAttribute('src');
-          if (src && (src.includes('.jpg') || src.includes('.png') || src.includes('.jpeg'))) {
-            // Verificar si es una URL completa
-            if (src.startsWith('http')) {
-              imagen = src;
-            } else {
-              // Convertir URL relativa a absoluta
-              const baseUrl = new URL(url).origin;
-              imagen = new URL(src, baseUrl).href;
-            }
-            break;
-          }
-        }
-      }
-      
-      // Si no encontramos imagen, usar screenshot del servicio WordPress
-      if (!imagen) {
-        imagen = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(url)}?w=1200`;
+        imagen = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(enlace)}?w=1200`;
       }
       
       return {
-        titulo: titulo,
-        descripcion: descripcion.length > 150 ? descripcion.substring(0, 150) + '...' : descripcion,
+        id: item.id,
+        titulo: item.titulo || 'Sin título',
+        descripcion: item.descripcion || 'Haz clic para ver la noticia',
+        enlace: enlace,
         imagen: imagen,
-        fuente: new URL(url).hostname.replace('www.', ''),
+        fuente: new URL(enlace).hostname.replace('www.', ''),
         fecha: new Date().toLocaleDateString('es-ES', { 
           year: 'numeric', 
           month: 'long', 
           day: 'numeric' 
         })
       };
-    } catch (error) {
-      console.error('Error extrayendo metadatos:', error);
-      return null;
-    }
+    });
   };
 
-  // Cargar metadatos para todas las noticias
   useEffect(() => {
-    const cargarMetadatos = async () => {
+    const cargarDatos = async () => {
       setCargando(true);
       try {
-        const noticiasActualizadas = await Promise.all(
-          noticias.map(async (noticia, idx) => {
-            // Si ya tenemos imagen en los datos, usarla directamente
-            if (noticia.imagen && !noticia.imagen.includes('placeholder')) {
-              return {
-                ...noticia,
-                titulo: noticia.titulo || `Noticia ${idx + 1}`,
-                descripcion: noticia.descripcion || 'Descripción no disponible',
-                fuente: noticia.fuente || new URL(noticia.enlace).hostname.replace('www.', ''),
-                fecha: noticia.fecha || new Date().toLocaleDateString()
-              };
-            }
-            
-            // Extraer metadatos del enlace
-            const metadatos = await extraerMetadatos(noticia.enlace);
-            
-            if (metadatos) {
-              return {
-                ...noticia,
-                titulo: metadatos.titulo,
-                descripcion: metadatos.descripcion,
-                imagen: metadatos.imagen,
-                fuente: metadatos.fuente,
-                fecha: metadatos.fecha
-              };
-            }
-            
-            // Fallback si no se pueden extraer metadatos
-            return {
-              ...noticia,
-              titulo: noticia.titulo || 'No se pudo cargar la noticia',
-              descripcion: noticia.descripcion || 'Haz clic para visitar el sitio',
-              imagen: noticia.imagen || `https://s.wordpress.com/mshots/v1/${encodeURIComponent(noticia.enlace)}?w=1200`,
-              fuente: noticia.fuente || new URL(noticia.enlace).hostname.replace('www.', ''),
-              fecha: noticia.fecha || new Date().toLocaleDateString()
-            };
-          })
-        );
+        const response = await fetch(`${API_URL}/enlaces`, {
+          signal: AbortSignal.timeout(5000)
+        });
         
-        setNoticiasConMeta(noticiasActualizadas);
-        setCargando(false);
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (Array.isArray(data) && data.length > 0) {
+          setNoticias(procesarNoticias(data));
+        } else {
+          setNoticias(procesarNoticias(noticiasRespaldo));
+        }
       } catch (error) {
-        console.error('Error cargando noticias:', error);
-        setError('Error al cargar las noticias');
+        console.warn('Error conectando al servidor, usando datos de respaldo:', error.message);
+        setNoticias(procesarNoticias(noticiasRespaldo));
+      } finally {
         setCargando(false);
       }
     };
 
-    cargarMetadatos();
+    cargarDatos();
   }, []);
 
   const handleSelect = (selectedIndex) => {
@@ -146,7 +105,8 @@ function NewsList() {
   };
 
   const handleNoticiaClick = (url) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    console.log('Click en noticia:', url);
+    window.open(url, '_blank');
   };
 
   if (cargando) {
@@ -155,24 +115,16 @@ function NewsList() {
         <Spinner animation="border" variant="primary" role="status">
           <span className="visually-hidden">Cargando noticias...</span>
         </Spinner>
-        <p className="mt-3 text-muted">Extrayendo información de los enlaces...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="alert alert-danger" role="alert">
-        {error}
+        <p className="mt-3 text-muted">Cargando noticias...</p>
       </div>
     );
   }
 
   return (
     <>
-      <Carousel activeIndex={index} onSelect={handleSelect} interval={5000} pause="hover">
-        {noticiasConMeta.map((noticia, idx) => (
-          <Carousel.Item key={idx}>
+      <Carousel activeIndex={index} onSelect={handleSelect} interval={5000} pause="hover" slide={false}>
+        {noticias.map((noticia, idx) => (
+          <Carousel.Item key={noticia.id || idx}>
             <div 
               className="d-block w-100 position-relative"
               style={{ 
@@ -182,35 +134,11 @@ function NewsList() {
                 backgroundPosition: 'center',
                 cursor: 'pointer'
               }}
-              onClick={() => handleNoticiaClick(noticia.enlace)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNoticiaClick(noticia.enlace);
+              }}
             >
-              {/* Miniatura overlay - versión mejorada */}
-              <div
-                className="position-absolute"
-                style={{
-                  bottom: '12px',
-                  right: '12px',
-                  zIndex: 10
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNoticiaClick(noticia.enlace);
-                }}
-              >
-                <div
-                  className="bg-white rounded shadow-sm p-1"
-                  style={{
-                    border: '2px solid rgba(255,255,255,0.9)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                    transition: 'transform 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                
-                 
-                </div>
-              </div>
             </div>
             
             <Carousel.Caption 
@@ -260,25 +188,13 @@ function NewsList() {
           </Carousel.Item>
         ))}
         
-        {/* Fallback si no hay noticias */}
-        {noticiasConMeta.length === 0 && noticias.map((noticia, idx) => (
-          <Carousel.Item key={idx}>
-            <img
-              className="d-block w-100"
-              src={
-                noticia.enlace
-                  ? `https://s.wordpress.com/mshots/v1/${encodeURIComponent(noticia.enlace)}?w=1200`
-                  : noticia.imagen || `/casa_0${(idx % 3) + 1}.jpg`
-              }
-              alt={`Noticia ${idx + 1}`}
-              style={{ height: '400px', objectFit: 'cover' }}
-            />
-            <Carousel.Caption>
-              <h3>{noticia.titulo || `Noticia ${idx + 1}`}</h3>
-              <p>{noticia.descripcion || 'Descripción no disponible'}</p>
-            </Carousel.Caption>
+        {noticias.length === 0 && (
+          <Carousel.Item>
+            <div className="d-flex align-items-center justify-content-center" style={{ height: '400px' }}>
+              <p className="text-muted">No hay noticias disponibles</p>
+            </div>
           </Carousel.Item>
-        ))}
+        )}
       </Carousel>
     </>
   );
