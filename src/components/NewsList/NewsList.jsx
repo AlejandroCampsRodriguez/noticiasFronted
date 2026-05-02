@@ -5,37 +5,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const noticiasRespaldo = [
-  {
-    id: 1,
-    titulo: "Noticias para desarrolladores",
-    descripcion: "Actualidad sobre desarrollo web y software",
-    enlace: "https://dev.to",
-    thumbnail: null
-  },
-  {
-    id: 2,
-    titulo: "Frontend y JavaScript",
-    descripcion: "Tendencias y novedades del frontend moderno",
-    enlace: "https://midu.dev",
-    thumbnail: null
-  },
-  {
-    id: 3,
-    titulo: "Mobile y tecnología",
-    descripcion: "Noticias sobre desarrollo móvil",
-    enlace: "https://www.reactnative.dev/blog",
-    thumbnail: null
-  },
-  {
-    id: 4,
-    titulo: "Recursos de programación",
-    descripcion: "Noticias y recursos de programación web",
-    enlace: "https://www.noticias.dev/",
-    thumbnail: null
-  }
-];
-
 function NewsList() {
   const [noticias, setNoticias] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -116,6 +85,14 @@ function NewsList() {
           <span className="visually-hidden">Cargando noticias...</span>
         </Spinner>
         <p className="mt-3 text-muted">Cargando noticias...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center my-5 py-5">
+        <p className="text-danger">{error}</p>
       </div>
     );
   }
