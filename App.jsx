@@ -28,7 +28,7 @@ function App() {
 
       const data = await response.json();
       const resultadosAPI = data.results || [];
-      
+
       const resultadosFormateados = resultadosAPI.map(r => ({
         id: r.id,
         title: r.titulo,
@@ -37,7 +37,7 @@ function App() {
         description: r.descripcion,
         type: r.tipo_contenido || 'web'
       }));
-      
+
       setResults(resultadosFormateados);
     } catch (error) {
       console.error('Error al buscar:', error);
