@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Carousel from 'react-bootstrap/Carousel';
-import { Card, Button, Spinner } from 'react-bootstrap';
+import { Button, Spinner, Container, Badge } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -12,17 +12,14 @@ function NewsList() {
   const [index, setIndex] = useState(0);
 
   const procesarNoticias = (data) => {
-    console.log('Datos recibidos:', data);
     return data.map((item) => {
       let imagen = item.thumbnail;
       const enlace = item.enlace;
-      
-      console.log('Enlace procesando:', enlace);
-      
+
       if (!imagen) {
-        imagen = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(enlace)}?w=1200`;
+        imagen = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(enlace)}?w=1280`;
       }
-      
+
       return {
         id: item.id,
         titulo: item.titulo || 'Sin título',
@@ -30,10 +27,9 @@ function NewsList() {
         enlace: enlace,
         imagen: imagen,
         fuente: new URL(enlace).hostname.replace('www.', ''),
-        fecha: new Date().toLocaleDateString('es-ES', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        fecha: new Date().toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: 'short'
         })
       };
     });
@@ -46,134 +42,116 @@ function NewsList() {
         const response = await fetch(`${API_URL}/enlaces`, {
           signal: AbortSignal.timeout(5000)
         });
-        
-        if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
         const data = await response.json();
-        
+
         if (Array.isArray(data) && data.length > 0) {
-          setNoticias(procesarNoticias(data));
-        } else {
-          setNoticias(procesarNoticias(noticiasRespaldo));
+          const noticiasFiltradas = data.filter(item => item.id >= 1 && item.id <= 5);
+          setNoticias(procesarNoticias(noticiasFiltradas));
         }
       } catch (error) {
-        console.warn('Error conectando al servidor, usando datos de respaldo:', error.message);
-        setNoticias(procesarNoticias(noticiasRespaldo));
+        setError('No se pudieron cargar las noticias');
       } finally {
         setCargando(false);
       }
     };
-
     cargarDatos();
   }, []);
 
-  const handleSelect = (selectedIndex) => {
-    setIndex(selectedIndex);
-  };
-
-  const handleNoticiaClick = (url) => {
-    console.log('Click en noticia:', url);
-    window.open(url, '_blank');
-  };
+  const handleNoticiaClick = (url) => window.open(url, '_blank');
 
   if (cargando) {
     return (
-      <div className="text-center my-5 py-5">
-        <Spinner animation="border" variant="primary" role="status">
-          <span className="visually-hidden">Cargando noticias...</span>
-        </Spinner>
-        <p className="mt-3 text-muted">Cargando noticias...</p>
+      <div className="d-flex   flex-column align-items-center justify-content-center my-5 py-5">
+        <Spinner animation="grow" variant="primary" />
+        <span className="mt-3 text-secondary fw-bold">Actualizando titulares...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center my-5 py-5">
-        <p className="text-danger">{error}</p>
-      </div>
+      <Container className="text-center my-5">
+        <Badge bg="danger" className="p-2">Error de conexión</Badge>
+        <p className="text-muted mt-2 small">{error}</p>
+      </Container>
     );
   }
 
   return (
-    <>
-      <Carousel activeIndex={index} onSelect={handleSelect} interval={5000} pause="hover" slide={false}>
-        {noticias.map((noticia, idx) => (
-          <Carousel.Item key={noticia.id || idx}>
-            <div 
-              className="d-block w-100 position-relative"
-              style={{ 
-                height: '450px',
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.7)), url(${noticia.imagen})`,
+    <div className="news-carousel-wrapper shadow-lg rounded-4 overflow-hidden">
+      <Carousel
+        activeIndex={index}
+        onSelect={(idx) => setIndex(idx)}
+        interval={6000}
+        pause="hover"
+        indicators={true}
+        className="bg-dark"
+      >
+        {noticias.map((noticia) => (
+          <Carousel.Item key={noticia.id}>
+            {/* Contenedor de Imagen con Overlay Dinámico */}
+            <div
+              className="position-relative w-100"
+              style={{
+                height: '24rem',
+                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.9) 100%), url(${noticia.imagen})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                cursor: 'pointer'
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNoticiaClick(noticia.enlace);
+                transition: 'all 0.5s ease'
               }}
             >
+              {/* Contenido flotante */}
+              <div className="position-absolute bottom-0 start-0 w-100 p-4 text-white">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <Badge bg="primary" className="text-uppercase px-2 py-1" style={{ fontSize: '0.7rem' }}>
+                    {noticia.fuente}
+                  </Badge>
+                  <span className="text-white-50 small">| {noticia.fecha}</span>
+                </div>
+
+                <h2 className="h4 fw-bold mb-2 text-truncate-2" style={{ lineHeight: '1.2' }}>
+                  {noticia.titulo}
+                </h2>
+
+                <p className="small text-white-50 mb-3 d-none d-md-block text-truncate-2">
+                  {noticia.descripcion}
+                </p>
+
+                <Button
+                  variant="light"
+                  size="sm"
+                  className="fw-bold rounded-pill px-4 shadow-sm"
+                  onClick={() => handleNoticiaClick(noticia.enlace)}
+                >
+                  Leer más
+                </Button>
+              </div>
             </div>
-            
-            <Carousel.Caption 
-              className="text-start p-4"
-              style={{
-                background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                paddingBottom: '60px'
-              }}
-            >
-              <Card className="bg-dark bg-opacity-75 border-0">
-                <Card.Body className="p-3">
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <span className="badge bg-primary bg-opacity-90">
-                      {noticia.fuente}
-                    </span>
-                    <small className="text-light opacity-75">
-                      {noticia.fecha}
-                    </small>
-                  </div>
-                  <Card.Title className="text-white mb-2 fs-4">
-                    {noticia.titulo}
-                  </Card.Title>
-                  <Card.Text className="text-light mb-3 opacity-90">
-                    {noticia.descripcion}
-                  </Card.Text>
-                  <Button 
-                    variant="outline-light"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleNoticiaClick(noticia.enlace);
-                    }}
-                    className="d-flex align-items-center gap-2"
-                  >
-                    <span>Leer noticia completa</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
-                      <path fillRule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
-                      <path fillRule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
-                    </svg>
-                  </Button>
-                </Card.Body>
-              </Card>
-            </Carousel.Caption>
           </Carousel.Item>
         ))}
-        
-        {noticias.length === 0 && (
-          <Carousel.Item>
-            <div className="d-flex align-items-center justify-content-center" style={{ height: '400px' }}>
-              <p className="text-muted">No hay noticias disponibles</p>
-            </div>
-          </Carousel.Item>
-        )}
       </Carousel>
-    </>
+
+      {/* Estilos CSS Inline para corregir detalles */}
+      <style>{`
+        .text-truncate-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .carousel-indicators [data-bs-target] {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          margin: 0 5px;
+        }
+        .news-carousel-wrapper {
+          max-width: 900px;
+          margin: 0 auto;
+        }
+      `}</style>
+    </div>
   );
 }
 
