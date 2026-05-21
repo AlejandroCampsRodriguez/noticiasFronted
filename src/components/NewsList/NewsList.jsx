@@ -3,7 +3,12 @@ import Carousel from 'react-bootstrap/Carousel';
 import { Button, Spinner, Container, Badge } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URLS = [
+  'http://localhost:8000',
+  import.meta.env.VITE_API_URL || 'https://newsbackfastapi.vercel.app'
+];
+
+const API_URL = API_URLS[0];
 
 function NewsList() {
   const [noticias, setNoticias] = useState([]);
@@ -13,11 +18,26 @@ function NewsList() {
 
   const procesarNoticias = (data) => {
     return data.map((item) => {
-      let imagen = item.thumbnail;
-      const enlace = item.enlace;
+      let enlace = item.enlace;
 
+      if (!enlace) {
+        return null;
+      }
+
+      if (!enlace.startsWith('http://') && !enlace.startsWith('https://')) {
+        enlace = 'https://' + enlace;
+      }
+
+      let imagen = item.thumbnail || item.thumbnail_url;
       if (!imagen) {
         imagen = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(enlace)}?w=1280`;
+      }
+
+      let fuente = 'Fuente desconocida';
+      try {
+        fuente = new URL(enlace).hostname.replace('www.', '');
+      } catch {
+        fuente = 'Fuente desconocida';
       }
 
       return {
@@ -26,39 +46,55 @@ function NewsList() {
         descripcion: item.descripcion || 'Haz clic para ver la noticia',
         enlace: enlace,
         imagen: imagen,
-        fuente: new URL(enlace).hostname.replace('www.', ''),
+        fuente: fuente,
         fecha: new Date().toLocaleDateString('es-ES', {
           day: '2-digit',
           month: 'short'
         })
       };
-    });
+    }).filter(Boolean);
   };
 
   useEffect(() => {
     const cargarDatos = async () => {
       setCargando(true);
-      try {
-        const response = await fetch(`${API_URL}/enlaces`, {
-          signal: AbortSignal.timeout(5000)
-        });
-        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-        const data = await response.json();
+      for (const url of API_URLS) {
+        try {
+          const response = await fetch(`${url}/enlaces`, {
+            signal: AbortSignal.timeout(5000)
+          });
+          if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+          const data = await response.json();
 
-        if (Array.isArray(data) && data.length > 0) {
-          const noticiasFiltradas = data.filter(item => item.id >= 1 && item.id <= 5);
-          setNoticias(procesarNoticias(noticiasFiltradas));
+          let arrayData = [];
+          if (Array.isArray(data)) {
+            arrayData = data;
+          } else if (data && Array.isArray(data.enlaces)) {
+            arrayData = data.enlaces;
+          }
+
+          if (arrayData.length > 0) {
+            const noticiasFiltradas = arrayData.filter(item => item.id >= 1 && item.id <= 5);
+            const procesadas = procesarNoticias(noticiasFiltradas);
+            setNoticias(procesadas.length > 0 ? procesadas : procesarNoticias(arrayData.slice(0, 5)));
+            setCargando(false);
+            return;
+          }
+        } catch {
+          continue;
         }
-      } catch (error) {
-        setError('No se pudieron cargar las noticias');
-      } finally {
-        setCargando(false);
       }
+      setError('No se pudieron cargar las noticias');
+      setCargando(false);
     };
     cargarDatos();
   }, []);
 
-  const handleNoticiaClick = (url) => window.open(url, '_blank');
+  const handleNoticiaClick = (url) => {
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
 
   if (cargando) {
     return (
@@ -74,6 +110,15 @@ function NewsList() {
       <Container className="text-center my-5">
         <Badge bg="danger" className="p-2">Error de conexión</Badge>
         <p className="text-muted mt-2 small">{error}</p>
+      </Container>
+    );
+  }
+
+  if (noticias.length === 0) {
+    return (
+      <Container className="text-center my-5 py-5">
+        <Badge bg="secondary" className="p-2">No hay noticias disponibles</Badge>
+        <p className="text-muted mt-2 small">Intenta más tarde</p>
       </Container>
     );
   }
@@ -119,10 +164,12 @@ function NewsList() {
                 </p>
 
                 <Button
+                  onClick={() => handleNoticiaClick(noticia.enlace)}
                   variant="light"
                   size="sm"
                   className="fw-bold rounded-pill px-4 shadow-sm"
-                  onClick={() => handleNoticiaClick(noticia.enlace)}
+                  style={{ zIndex: 10, position: 'relative', pointerEvents: 'auto' }}
+
                 >
                   Leer más
                 </Button>

@@ -1,83 +1,78 @@
 import React from 'react';
-import { Card, Button, Badge } from 'react-bootstrap';
+import { Card, Button, Badge, Container, Row, Col } from 'react-bootstrap';
 
 function SearchResults({ results }) {
   if (!results || results.length === 0) {
     return (
-      <div className="text-center my-5 py-5">
-        <i className="bi bi-search fs-1 text-muted"></i>
-        <p className="text-muted mt-3">No se encontraron resultados.</p>
+      <div className="text-center my-5 py-5 animate__animated animate__fadeIn">
+        <div className="mb-4">
+          <i className="bi bi-search-heart fs-1 text-primary opacity-50"></i>
+        </div>
+        <h4 className="text-light fw-light">Sin coincidencias</h4>
+        <p className="text-muted">Intenta con otros términos o categorías.</p>
       </div>
     );
   }
 
   return (
-    <div className="container-fluid px-2 px-md-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h5 className="fw-bold text-light mb-0">
-          <i className="bi bi-collection-play me-2"></i>
-          Resultados ({results.length})
-        </h5>
+    <Container fluid className="px-3 px-md-5 py-4">
+      {/* Encabezado con estilo moderno */}
+      <div className="d-flex align-items-center mb-5 border-bottom border-secondary pb-3">
+        <div className="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+          <i className="bi bi-cpu fs-4 text-primary"></i>
+        </div>
+        <div>
+          <h5 className="fw-bold text-white mb-0">Resultados de IA</h5>
+          <small className="text-muted">Se encontraron {results.length} entradas relevantes</small>
+        </div>
       </div>
-      
-      <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
+
+      <Row className="g-4">
         {results.map((item) => (
-          <div className="col" key={item.id}>
+          <Col xs={12} sm={6} lg={4} xl={3} key={item.id}>
             <Card
-              className="h-100 border-0 overflow-hidden"
-              style={{ 
-                cursor: 'pointer', 
-                backgroundColor: '#2d2d2d',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+              className="h-100 search-card border-0 shadow-sm"
+              style={{
+                backgroundColor: 'rgba(30, 30, 30,0.85)',
+                backdropFilter: 'blur(10px)',
+                borderColor: 'rgba(255,255,255,0.1)',
+                borderRadius: '16px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+
               }}
               onClick={() => window.open(item.url, '_blank', 'noopener,noreferrer')}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-5px)';
-                e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
             >
-              {item.type === 'youtube' && item.thumbnail && (
-                <div className="position-relative overflow-hidden">
-                  <Card.Img
-                    variant="top"
-                    src={item.thumbnail}
-                    alt={item.title}
-                    style={{ 
-                      height: '160px', 
-                      objectFit: 'cover',
-                      transition: 'transform 0.3s ease'
-                    }}
-                  />
-                  <Badge 
-                    bg="danger" 
-                    className="position-absolute top-0 end-0 m-2"
-                  >
-                    <i className="bi bi-youtube me-1"></i>YouTube
-                  </Badge>
-                  <div 
-                    className="position-absolute top-0 start-0 w-100 h-100" 
-                    style={{ background: 'rgba(0,0,0,0.1)' }}
-                  />
-                </div>
-              )}
-
-              <Card.Body className="d-flex flex-column p-3">
-                <div className="d-flex justify-content-between align-items-start mb-2">
-                  <Badge 
-                    bg={item.type === 'youtube' ? 'danger' : 'primary'} 
-                    className="text-uppercase fs-6"
-                  >
-                    {item.type}
-                  </Badge>
+              {/* Media Section */}
+              <div className="position-relative overflow-hidden rounded-top-4">
+                <Card.Img
+                  variant="top"
+                  src={item.thumbnail || `https://s.wordpress.com/mshots/v1/${encodeURIComponent(item.url)}?w=600`}
+                  alt={item.title}
+                  style={{
+                    height: '180px',
+                    objectFit: 'cover',
+                    filter: 'brightness(0.9)'
+                  }}
+                />
+                <div className="card-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-0">
+                  <i className="bi bi-plus-circle fs-1 text-white"></i>
                 </div>
 
-                <Card.Title 
-                  className="h6 fw-bold text-light mb-2" 
-                  style={{ 
+                <Badge
+                  bg="dark"
+                  className="position-absolute top-0 start-0 m-2 bg-opacity-75 backdrop-blur shadow-sm border border-secondary"
+                  style={{ borderRadius: '8px', fontSize: '0.7rem' }}
+                >
+                  <i className={`bi ${item.type === 'youtube' ? 'bi-youtube text-danger' : 'bi-globe text-info'} me-1`}></i>
+                  {item.type.toUpperCase()}
+                </Badge>
+              </div>
+
+              <Card.Body className="d-flex flex-column p-4">
+                <Card.Title
+                  className="h6 fw-bold text-white mb-3 lh-base"
+                  style={{
+                    height: '2.8rem',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
@@ -87,39 +82,53 @@ function SearchResults({ results }) {
                   {item.title}
                 </Card.Title>
 
-                {item.type === 'web' && item.description && (
-                  <Card.Text 
-                    className="text-secondary small flex-grow-1 mb-3" 
-                    style={{ 
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {item.description}
-                  </Card.Text>
-                )}
-
-                <Button
-                  variant={item.type === 'youtube' ? 'outline-danger' : 'outline-primary'}
-                  size="sm"
-                  className="mt-auto d-flex align-items-center justify-content-center gap-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(item.url, '_blank', 'noopener,noreferrer');
+                <Card.Text
+                  className="text-white mb-4"
+                  style={{
+                    fontSize: '0.85rem',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    lineHeight: '1.5'
                   }}
-                  style={{ borderRadius: '20px' }}
                 >
-                  <i className="bi bi-box-arrow-up-right"></i>
-                  Ver {item.type === 'youtube' ? 'video' : 'enlace'}
-                </Button>
+                  {item.description || 'Explora este contenido técnico detallado en el sitio oficial.'}
+                </Card.Text>
+
+                <div className="mt-auto d-flex gap-2">
+                  <Button
+                    variant="primary"
+                    className="w-100 py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2"
+                    style={{ borderRadius: '12px', fontSize: '0.85rem' }}
+                  >
+                    <span>Abrir</span>
+                    <i className="bi bi-arrow-up-right-circle"></i>
+                  </Button>
+                </div>
               </Card.Body>
             </Card>
-          </div>
+          </Col>
         ))}
-      </div>
-    </div>
+      </Row>
+
+      <style>{`
+        .search-card:hover {
+          transform: translateY(-8px);
+          background-color: rgba(60, 60, 60, 0.8) !important;
+          border-color: rgba(13, 110, 253, 0.4) !important;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important;
+        }
+        .search-card:hover .card-overlay {
+          opacity: 1;
+          background: rgba(13, 110, 253, 0.2);
+        }
+        .backdrop-blur {
+          backdrop-filter: blur(4px);
+        }
+        .lh-base { line-height: 1.4 !important; }
+      `}</style>
+    </Container>
   );
 }
 

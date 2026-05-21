@@ -6,6 +6,11 @@ import Footer from "./src/components/Footer/Footer";
 import NewsList from "./src/components/NewsList/NewsList";
 import { Spinner } from 'react-bootstrap';
 
+const API_URLS = [
+  'http://localhost:8000',
+  import.meta.env.VITE_API_URL || 'https://newsbackfastapi.vercel.app'
+];
+
 function App() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,31 +25,34 @@ function App() {
     setLoading(true);
     setResults([]);
 
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-      const response = await fetch(
-        `${apiUrl}/search?q=${encodeURIComponent(query)}`
-      );
+    for (const apiUrl of API_URLS) {
+      try {
+        const response = await fetch(
+          `${apiUrl}/search?q=${encodeURIComponent(query)}`
+        );
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        const data = await response.json();
+        const resultadosAPI = data.results || [];
 
-      const data = await response.json();
-      const resultadosAPI = data.results || [];
+        const resultadosFormateados = resultadosAPI.map(r => ({
+          id: r.id,
+          title: r.titulo,
+          url: r.enlace,
+          thumbnail: r.thumbnail,
+          description: r.descripcion,
+          type: r.tipo_contenido || 'web'
+        }));
 
-      const resultadosFormateados = resultadosAPI.map(r => ({
-        id: r.id,
-        title: r.titulo,
-        url: r.enlace,
-        thumbnail: r.thumbnail,
-        description: r.descripcion,
-        type: r.tipo_contenido || 'web'
-      }));
-
-      setResults(resultadosFormateados);
-    } catch (error) {
-      console.error('Error al buscar:', error);
-      setResults([]);
-    } finally {
-      setLoading(false);
+        setResults(resultadosFormateados);
+        setLoading(false);
+        return;
+      } catch {
+        continue;
+      }
     }
+    console.error('Error al buscar: no se pudo conectar');
+    setResults([]);
+    setLoading(false);
   };
 
   return (
