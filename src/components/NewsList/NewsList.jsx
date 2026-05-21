@@ -3,9 +3,10 @@ import Carousel from 'react-bootstrap/Carousel';
 import { Button, Spinner, Container, Badge } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+// CAMBIO EXCLUSIVO AQUÍ: Definimos primero la URL de producción y luego la local
 const API_URLS = [
-  'http://localhost:8000',
-  import.meta.env.VITE_API_URL || 'https://newsbackfastapi.vercel.app'
+  import.meta.env.VITE_API_URL || 'https://newsbackfastapi.vercel.app',
+  'http://localhost:8000'
 ];
 
 const API_URL = API_URLS[0];

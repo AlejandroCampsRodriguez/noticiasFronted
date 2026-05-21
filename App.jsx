@@ -7,8 +7,8 @@ import NewsList from "./src/components/NewsList/NewsList";
 import { Spinner } from 'react-bootstrap';
 
 const API_URLS = [
-  'http://localhost:8000',
-  import.meta.env.VITE_API_URL || 'https://newsbackfastapi.vercel.app'
+  import.meta.env.VITE_API_URL || 'https://newsbackfastapi.vercel.app',
+  'http://localhost:8000'
 ];
 
 function App() {
