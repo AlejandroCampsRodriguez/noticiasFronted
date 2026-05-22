@@ -4,9 +4,9 @@ import { Button, Spinner, Container, Badge } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 // CAMBIO EXCLUSIVO AQUÍ: Definimos primero la URL de producción y luego la local
+// Dejamos únicamente la URL de producción activa para Vercel
 const API_URLS = [
-  import.meta.env.VITE_API_URL || 'https://newsbackfastapi.vercel.app',
-  'http://localhost:8000'
+  import.meta.env.VITE_API_URL || 'https://newsbackfastapi.vercel.app'
 ];
 
 const API_URL = API_URLS[0];
@@ -62,7 +62,7 @@ function NewsList() {
       for (const url of API_URLS) {
         try {
           const response = await fetch(`${url}/enlaces`, {
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(8000)
           });
           if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
           const data = await response.json();
