@@ -59,7 +59,7 @@ function NewsList() {
   useEffect(() => {
     const cargarDatos = async () => {
       setCargando(true);
-      for (const url of API_URLS) {
+      for (const url of API_URL) {
         try {
           const response = await fetch(`${url}/enlaces`, {
             signal: AbortSignal.timeout(8000)
