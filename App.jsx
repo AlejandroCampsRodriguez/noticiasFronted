@@ -13,18 +13,41 @@ const API_URLS = [
 
 function App() {
   const [results, setResults] = useState([]);
+  const [aiSummary, setAiSummary] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const normalizar = (texto) => {
-    return texto.toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-  };
 
   const handleSearch = async (query) => {
     setLoading(true);
     setResults([]);
+    setAiSummary('');
 
+    for (const apiUrl of API_URLS) {
+      try {
+        const response = await fetch(
+          `${apiUrl}/search/rag?q=${encodeURIComponent(query)}&limit=8`
+        );
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+        const data = await response.json();
+
+        const resultadosFormateados = (data.articles || []).map(r => ({
+          id: r.id,
+          title: r.titulo,
+          url: r.enlace,
+          thumbnail: r.thumbnail,
+          description: r.descripcion,
+          type: r.tipo_contenido || 'web'
+        }));
+
+        setAiSummary(data.ai_summary || '');
+        setResults(resultadosFormateados);
+        setLoading(false);
+        return;
+      } catch {
+        continue;
+      }
+    }
+
+    // Fallback: búsqueda de texto clásica
     for (const apiUrl of API_URLS) {
       try {
         const response = await fetch(
@@ -50,6 +73,7 @@ function App() {
         continue;
       }
     }
+
     console.error('Error al buscar: no se pudo conectar');
     setResults([]);
     setLoading(false);
@@ -65,10 +89,10 @@ function App() {
         {loading && (
           <div className="text-center my-4">
             <Spinner animation="border" />
-            <p className="mt-2 text-muted">Buscando en Web y YouTube...</p>
+            <p className="mt-2 text-muted">Analizando noticias con IA...</p>
           </div>
         )}
-        {!loading && <SearchResults results={results} />}
+        {!loading && <SearchResults aiSummary={aiSummary} results={results} />}
       </main>
       <Footer />
     </div>
