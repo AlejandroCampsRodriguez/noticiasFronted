@@ -4,8 +4,8 @@ import ResultYoutubeItem from './ResultYoutubeItem';
 function SearchResultsContainer({ results }) {
   if (!results || results.length === 0) return null;
 
-  const webResults = results.filter(r => r.type === 'web');
-  const youtubeResults = results.filter(r => r.type === 'youtube');
+  const youtubeResults = results.filter(r => (r.type || '').toLowerCase() === 'youtube');
+  const webResults = results.filter(r => (r.type || '').toLowerCase() !== 'youtube');
 
   return (
     <section className="container-fluid px-2 px-md-4 py-3">

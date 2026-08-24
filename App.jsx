@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from "./src/components/Header/Header";
 import SearchBar from "./src/components/SearchBar/SearchBar";
 import SearchResults from "./src/components/SearchResults/SearchResults";
@@ -15,16 +15,32 @@ function App() {
   const [results, setResults] = useState([]);
   const [aiSummary, setAiSummary] = useState('');
   const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState('');
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('theme') || 'dark'
+  );
 
-  const handleSearch = async (query) => {
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+    document.documentElement.setAttribute('data-bs-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  const handleSearch = async (searchQuery) => {
+    const q = searchQuery.trim();
+    if (!q) return;
     setLoading(true);
     setResults([]);
     setAiSummary('');
+    setQuery(q);
 
     for (const apiUrl of API_URLS) {
       try {
         const response = await fetch(
-          `${apiUrl}/search/rag?q=${encodeURIComponent(query)}&limit=8`
+          `${apiUrl}/search/rag?q=${encodeURIComponent(q)}&limit=8`
         );
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
         const data = await response.json();
@@ -35,7 +51,8 @@ function App() {
           url: r.enlace,
           thumbnail: r.thumbnail,
           description: r.descripcion,
-          type: r.tipo_contenido || 'web'
+          type: r.tipo_contenido || 'web',
+          similarity: r.similarity ?? null
         }));
 
         setAiSummary(data.ai_summary || '');
@@ -51,7 +68,7 @@ function App() {
     for (const apiUrl of API_URLS) {
       try {
         const response = await fetch(
-          `${apiUrl}/search?q=${encodeURIComponent(query)}`
+          `${apiUrl}/search?q=${encodeURIComponent(q)}`
         );
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
         const data = await response.json();
@@ -63,7 +80,8 @@ function App() {
           url: r.enlace,
           thumbnail: r.thumbnail,
           description: r.descripcion,
-          type: r.tipo_contenido || 'web'
+          type: r.tipo_contenido || 'web',
+          similarity: null
         }));
 
         setResults(resultadosFormateados);
@@ -80,8 +98,11 @@ function App() {
   };
 
   return (
-    <div className="d-flex flex-column min-vh-100">
-      <Header />
+    <div
+      className={`d-flex flex-column min-vh-100 app-theme app-theme-${theme}`}
+      data-bs-theme={theme}
+    >
+      <Header theme={theme} onToggleTheme={toggleTheme} />
       <main className="flex-grow-1 mt-3">
         <NewsList />
         <SearchBar onSearch={handleSearch} />
@@ -92,7 +113,14 @@ function App() {
             <p className="mt-2 text-muted">Analizando noticias con IA...</p>
           </div>
         )}
-        {!loading && <SearchResults aiSummary={aiSummary} results={results} />}
+        {!loading && (
+          <SearchResults
+            aiSummary={aiSummary}
+            results={results}
+            query={query}
+            onSearch={handleSearch}
+          />
+        )}
       </main>
       <Footer />
     </div>
