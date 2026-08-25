@@ -28,7 +28,7 @@ function SearchBar({ onSearch }) {
           <i className="bi bi-search" style={{ fontSize: '0.8rem' }}></i>
           <span>Smart Search</span>
         </div>
-        <span className="badge bg-white text-primary" style={{ fontSize: '0.7rem' }}>AI Powered</span>
+        <span className="badge  text-primary" style={{ fontSize: '0.7rem' }}>AI Powered</span>
       </div>
       <div className="mx-auto" style={{ maxWidth: '520px' }}>
         <InputGroup

@@ -4,6 +4,7 @@ import SearchBar from "./src/components/SearchBar/SearchBar";
 import SearchResults from "./src/components/SearchResults/SearchResults";
 import Footer from "./src/components/Footer/Footer";
 import NewsList from "./src/components/NewsList/NewsList";
+import Sidebar from "./src/components/Sidebar/Sidebar";
 import { Spinner } from 'react-bootstrap';
 
 const API_URLS = [
@@ -103,25 +104,41 @@ function App() {
       data-bs-theme={theme}
     >
       <Header theme={theme} onToggleTheme={toggleTheme} />
-      <main className="flex-grow-1 mt-3">
-        <NewsList />
-        <SearchBar onSearch={handleSearch} />
+      <div className="d-flex flex-grow-1 content-row">
+        <Sidebar
+          title="Destacadas"
+          icon="bi-collection-play-fill"
+          withThumbnail={true}
+          sliceStart={0}
+          sliceEnd={5}
+        />
+        <main className="flex-grow-1 mt-3 px-2 px-lg-3 main-content">
+          <NewsList />
+          <SearchBar onSearch={handleSearch} />
 
-        {loading && (
-          <div className="text-center my-4">
-            <Spinner animation="border" />
-            <p className="mt-2 text-muted">Analizando noticias con IA...</p>
-          </div>
-        )}
-        {!loading && (
-          <SearchResults
-            aiSummary={aiSummary}
-            results={results}
-            query={query}
-            onSearch={handleSearch}
-          />
-        )}
-      </main>
+          {loading && (
+            <div className="text-center my-4">
+              <Spinner animation="border" />
+              <p className="mt-2 text-muted">Analizando noticias con IA...</p>
+            </div>
+          )}
+          {!loading && (
+            <SearchResults
+              aiSummary={aiSummary}
+              results={results}
+              query={query}
+              onSearch={handleSearch}
+            />
+          )}
+        </main>
+        <Sidebar
+          title="Más noticias"
+          icon="bi-newspaper"
+          withThumbnail={false}
+          sliceStart={5}
+          sliceEnd={10}
+        />
+      </div>
       <Footer />
     </div>
   );

@@ -29,7 +29,7 @@ function Header({ theme = 'dark', onToggleTheme }) {
             <i className="bi bi-phone"></i> Mobile &nbsp;
             <i className="bi bi-code-slash"></i> React &nbsp;
             <i className="bi bi-terminal"></i> Python &nbsp;
-            <i className="bi bi-cpu"></i> Tecnología
+            <i className="bi bi-cpu"></i> Tecnología 
           </p>
         </div>
 

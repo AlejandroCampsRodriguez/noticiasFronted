@@ -83,3 +83,52 @@ html[data-bs-theme="light"] body {
   background-color: #f8f9fa !important;
   border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
+
+/* === Sidebars (izquierda y derecha) === */
+.sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  align-self: stretch;
+  overflow-y: auto;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background-color 0.3s ease;
+}
+
+.sidebar:last-of-type {
+  border-right: none;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-item {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.sidebar-item:hover {
+  background-color: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.35);
+  transform: translateX(2px);
+}
+
+.main-content {
+  min-width: 0;
+}
+
+/* === Sidebars en modo claro === */
+.app-theme-light .sidebar {
+  background-color: #ffffff;
+  border-right-color: rgba(0, 0, 0, 0.08);
+}
+
+.app-theme-light .sidebar:last-of-type {
+  border-left-color: rgba(0, 0, 0, 0.08);
+}
+
+.app-theme-light .sidebar-item:hover {
+  background-color: rgba(139, 92, 246, 0.1);
+}
+
+.app-theme-light .sidebar h6.text-white {
+  color: #1a1a1a !important;
+}
