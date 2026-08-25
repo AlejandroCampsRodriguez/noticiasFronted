@@ -56,6 +56,11 @@ function App() {
           similarity: r.similarity ?? null
         }));
 
+        const resumenCaido = (data.ai_summary || '').includes('No se pudo generar el resumen');
+        if (resumenCaido && apiUrl !== API_URLS[API_URLS.length - 1]) {
+          throw new Error('Resumen IA no disponible en este backend');
+        }
+
         setAiSummary(data.ai_summary || '');
         setResults(resultadosFormateados);
         setLoading(false);
